@@ -86,7 +86,6 @@ class System:
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi) / self.cost_effi
-        # print("iiiiii", pg)
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
         self.current_battery += battery_charge
@@ -121,7 +120,6 @@ class System:
             val["radiation"] = a["Radiation"]
             val["temperature"] = a["Temperature"]
             val["consume"] = b["Consume"]
-            # TODO: 小数点位数
             # TODO: 时间格式
             system_process.append(val)
 
