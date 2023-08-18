@@ -35,7 +35,7 @@ def calculate_electricity_price(time: datetime):
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
 
-# print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
+print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
 
 class System:
     def __init__(self, solar: int, battery: int):
