@@ -98,7 +98,7 @@ class System:
         return {
             "time": self.time,
             "battery": self.current_battery,
-            "solar": SunlightHistory_data.iloc[self.step]["Electricity"],
+            "solar": SunlightHistory_data.iloc[self.step]["Electricity"] * self.solar_size,
             "consume": EnergyHistory_data.iloc[self.step]["Consume"]
         }
 
@@ -152,40 +152,38 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
-        if 5 <= data["time"].hour < 8 or 12 <= data["time"].hour < 17:
-            sy.update(min(sy.max_battery - data["battery"], data["solar"]))
+        if data["solar"] * sy.cost_effi > data["consume"]:
+            sy.update(min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]))
         else:
-            if data["solar"] * sy.cost_effi > data["consume"]:
-                sy.update(min(data["solar"] * sy.cost_effi - data["consume"], sy.max_battery - data["battery"]))
-            else:
-                sy.update(-min(data["consume"] - data["solar"] * sy.cost_effi, data["battery"]))
+            sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
 
-s = System(2000, 120)
-with open("../data/Examples.csv", "r") as file:
-    for i in file:
-        if 'date_time' in i:
-            continue
-        i = i.strip("\n").split(",")
-        bo = float(i[6])
-        bi = float(i[5])
-        s.update(bi - bo)
-
+# s = System(2000, 120)
+# with open("../data/Examples.csv", "r") as file:
+#     for i in file:
+#         if 'date_time' in i:
+#             continue
+#         i = i.strip("\n").split(",")
+#         bo = float(i[6])
+#         bi = float(i[5])
+#         s.update(bi - bo)
+#
 # print(round(s.get_result(), 4), sep=",")
 # print(s.get_purchase())
+# print(s.get_json())
+# exit(0)
+
+# s = System(1500, 150)
+# sb_stra(s)
+# print(round(s.get_result(), 4), s.get_purchase())
+#
+s = System(3000, 158)
+sb_stra(s)
+# print(round(s.get_result(), 4), s.get_purchase())
 print(s.get_json())
-exit(0)
 
-s = System(1500, 150)
-sb_stra(s)
-print(round(s.get_result(), 4), s.get_purchase())
-
-s = System(1500, 100)
-sb_stra(s)
-print(round(s.get_result(), 4), s.get_purchase())
-
-# for i in range(1, 159, 5):
-#     for j in range(0, 3000, 30):
+# for i in range(150, 159):
+#     for j in range(2500, 4000, 50):
 #         s = System(j, i)
 #         sb_stra(s)
 #         print(j, i, round(s.get_result(), 4), sep=",")
