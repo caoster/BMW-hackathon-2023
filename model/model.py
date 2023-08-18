@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
+from tabulate import tabulate
 
 import pandas as pd
 
-EnergyHistory_data = pd.read_csv("./data/EnergyHistory.csv")
-SunlightHistory_data = pd.read_csv("./data/SunlightHistory.csv")
+EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
+SunlightHistory_data = pd.read_csv("../data/SunlightHistory.csv")
 
 
 def light_gen_electricity(rad, temp):
@@ -29,6 +30,7 @@ def calculate_electricity_price(time: datetime):
 
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
+# print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
 
 class System:
     def __init__(self, solar: int, battery: int):
