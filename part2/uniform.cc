@@ -48,59 +48,16 @@ int main()
     
     double consume = 0.0;
     
-    std::set<std::pair<double, int>> bat;
     
     for (int i = 1; i <= 120; ++ i) {
-        bat.insert(std::make_pair(cap, i));
+        
         energy[0][i] = cap;
     }
     for (int hr = 1; hr <= hours; ++hr) {
+        double averge = change[hr] / 120;
         for (int i = 1; i <= 120; ++ i) {
-            energy[hr][i] = energy[hr - 1][i];
+            energy[hr][i] = energy[hr - 1][i] + averge;
         }
-        double left_in = 0, left_out = 0;
-        if (change[hr] > 0) {
-            left_in = change[hr];
-            while(left_in > eps) {
-                auto b = *bat.begin();
-                bat.erase(b);
-                double to_cap = cap - b.first, real_in;
-                if (left_in <= to_cap) {
-                    real_in = left_in;
-
-                } else {
-                    real_in = to_cap;
-                }
-                
-                left_in -= real_in;
-                double new_en = b.first + real_in;
-                
-                energy[hr][b.second] = new_en;
-                bat.insert(std::make_pair(new_en, b.second));
-            }
-        } else {
-            left_out = - change[hr];
-            while(left_out > eps) {
-                auto b = *bat.rbegin();
-                bat.erase(b);
-                double to_bottom = b.first, real_out;
-                if (left_out <= to_bottom) {
-                    real_out = left_out;
-                    
-                } else {
-                    real_out = to_bottom;
-                }
-                
-                left_out -= real_out;
-                // printf("%d out from %d = %.6f, left %.6f \n", hr, b.second, real_out, left_out);
-                
-                double new_en = b.first - real_out;
-                
-                energy[hr][b.second] = new_en;
-                bat.insert(std::make_pair(new_en, b.second));
-            }
-        }
-        // printf("left %lf %lf\n", left_out, left_in);
     }
     
     for (int i = 1; i <= 120; ++i) {
@@ -116,14 +73,12 @@ int main()
         }
     }
     
+    printf("consumption = %.8f\n", consume);
     freopen("out.txt", "w", stdout);
-    printf("%.8f\n", consume);
-    
     for (int hr = 1; hr <= hours; hr ++) {
         for (int i = 1; i <= 120; ++i) {
-            printf("%.4f ", energy[hr][i]);
+            printf("%d at %d = %.4f\n", i, hr, energy[hr][i]);
         }
-        puts("");
     }
     
     return 0;
