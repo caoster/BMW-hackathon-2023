@@ -31,6 +31,7 @@ def light_gen_electricity(rad, temp):
 SunlightHistory_data = pd.read_csv("./data/SunlightHistory.csv")
 print(SunlightHistory_data)
 SunlightHistory_data["elec"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
+SunlightHistory_data.to_csv("./vis/DateTime-Sunlight_processed.csv")
 plt.plot(SunlightHistory_data["DateTime"].values, SunlightHistory_data["elec"].values)
 plt.title("DateTime-Sunlight")
 plt.savefig("./vis/DateTime-Sunlight")
