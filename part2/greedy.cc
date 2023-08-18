@@ -120,8 +120,8 @@ int main()
         }
     }
     
-    freopen("greedy_out.txt", "w", stdout);
-    printf("\"battery_life_consume\":%.8f\n", consume);
+    freopen("greedy_out.json", "w", stdout);
+    printf("{\n\"battery_life_consume\":%.8f,\n", consume);
     puts("\"battery_scheduling\":[\n");
     for (int hr = 1; hr <= hours; hr ++) {
         int day = (hr - 1) / 24 + 1;
@@ -144,7 +144,7 @@ int main()
         }
         puts(hr==hours?"}" : "},");
     }
-    puts("]");
+    puts("]}");
     
     return 0;
 }
