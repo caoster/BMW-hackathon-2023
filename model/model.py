@@ -1,7 +1,10 @@
+import time
 from datetime import datetime, timedelta
 from tabulate import tabulate
 
 import pandas as pd
+
+DELTA = 1e-3
 
 EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
 SunlightHistory_data = pd.read_csv("../data/SunlightHistory.csv")
@@ -39,17 +42,19 @@ class System:
 
         global EnergyHistory_data, SunlightHistory_data
         self.solar_size = solar
+        self.solar_cost = self.solar_size * (500 / 10 / 12)
         self.battery_number = battery
+        self.battery_cost = 2 * self.battery_number + (1200 / 10 / 12)
         self.battery_unit_capacity = 10.5 * 0.9
-        self.cost_solar = 500
-        self.cost_convert = 500
+        self.cost_solar = 500 * 3 / 5 / 12
+        self.convert_cost = 500
         self.cost_effi = 0.95
         self.max_battery = self.battery_number * self.battery_unit_capacity
         if self.max_battery > 1500:
             assert False, "Battery size exceeds limit!"
-        self.cost_battery = 1200 + 2 * self.battery_number
         self.current_battery = self.max_battery
         self.electricity_cost = 0
+        self.electricity_purchased = 0
 
         # These two shall be updated together!
         self.time = datetime(2023, 5, 1, 0)
@@ -64,11 +69,11 @@ class System:
         })
 
     def update(self, battery_charge):
-        if not 0 <= battery_charge + self.current_battery <= self.max_battery:
-            assert False, f"Battery amount invalid!, {battery_charge} to {battery_charge + self.current_battery}!"
+        if not 0 - DELTA <= battery_charge + self.current_battery <= self.max_battery + DELTA:
+            assert False, f"Battery amount invalid!, charge {battery_charge} to {battery_charge + self.current_battery}!"
         solar = SunlightHistory_data.iloc[self.step]["Electricity"]
         energy = EnergyHistory_data.iloc[self.step]["Consume"]
-        if solar * self.cost_effi < battery_charge:
+        if solar * self.solar_size * self.cost_effi + DELTA < battery_charge:
             assert False, f"Not enough solar power for charging!"
 
         if battery_charge > 0:
@@ -81,7 +86,9 @@ class System:
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi) / self.cost_effi
+        # print("iiiiii", pg)
         self.electricity_cost += calculate_electricity_price(self.time) * pg
+        self.electricity_purchased += pg
         self.current_battery += battery_charge
         # TODO: update battery cycle
 
@@ -98,11 +105,16 @@ class System:
         }
 
     def get_result(self):
-        return self.electricity_cost
+        return self.electricity_cost + self.convert_cost + self.solar_cost + self.battery_cost
 
     def get_json(self):
         system_process = []
         for idx, val in enumerate(self.result):
+            val["energy_pv"] = round(val["energy_pv"], 4)
+            val["energy_bi"] = round(val["energy_bi"], 4)
+            val["energy_bo"] = round(val["energy_bo"], 4)
+            val["energy_pg"] = round(val["energy_pg"], 4)
+
             a = SunlightHistory_data.iloc[idx]
             b = EnergyHistory_data.iloc[idx]
             val["date_time"] = a["DateTime"]
@@ -116,11 +128,14 @@ class System:
         return {
             "battery_number": self.battery_number,
             "pv_area": self.solar_size,
-            "cost": self.electricity_cost,
+            "cost": round(self.get_result(), 4),
             "system_result": system_process,
             # "battery_life_consume": 0,
             # "battery_scheduling": [],
         }
+
+    def get_purchase(self):
+        return self.electricity_cost, self.electricity_purchased
 
 
 # cost = 0
@@ -140,14 +155,40 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
-        if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(min(data["solar"] * sy.cost_effi - data["consume"], sy.max_battery - data["battery"]))
+        if 5 <= data["time"].hour < 8 or 12 <= data["time"].hour < 17:
+            sy.update(min(sy.max_battery - data["battery"], data["solar"]))
         else:
-            sy.update(-min(data["consume"] - data["solar"] * sy.cost_effi, data["battery"]))
+            if data["solar"] * sy.cost_effi > data["consume"]:
+                sy.update(min(data["solar"] * sy.cost_effi - data["consume"], sy.max_battery - data["battery"]))
+            else:
+                sy.update(-min(data["consume"] - data["solar"] * sy.cost_effi, data["battery"]))
 
 
-for i in range(1, 159, 2):
-    for j in range(0, 3000, 30):
-        s = System(j, i)
-        sb_stra(s)
-        print(j, i, round(s.get_result(), 4), sep=",")
+s = System(2000, 120)
+with open("../data/Examples.csv", "r") as file:
+    for i in file:
+        if 'date_time' in i:
+            continue
+        i = i.strip("\n").split(",")
+        bo = float(i[6])
+        bi = float(i[5])
+        s.update(bi - bo)
+
+# print(round(s.get_result(), 4), sep=",")
+# print(s.get_purchase())
+print(s.get_json())
+exit(0)
+
+s = System(1500, 150)
+sb_stra(s)
+print(round(s.get_result(), 4), s.get_purchase())
+
+s = System(1500, 100)
+sb_stra(s)
+print(round(s.get_result(), 4), s.get_purchase())
+
+# for i in range(1, 159, 5):
+#     for j in range(0, 3000, 30):
+#         s = System(j, i)
+#         sb_stra(s)
+#         print(j, i, round(s.get_result(), 4), sep=",")
