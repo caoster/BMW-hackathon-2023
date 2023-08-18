@@ -1,0 +1,387 @@
+---
+title: "Lab 5: Import and Export"
+subtitle: "Stat 33B"
+author: "Prof. Gaston Sanchez"
+output: 
+  html_document:
+    toc: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+library(tidyverse)
+```
+
+> ### Learning Objectives
+>
+> -   Get to know various options to export data
+> -   Get to know various options to import data tables in R
+> -   Practice using reading tables functions from package `"utils"`
+
+### General Instructions
+
+-   Write your descriptions, explanations, and code in an `Rmd` (R
+    markdown) file.
+-   Name this file as `lab05-first-last.Rmd`, where `first` and `last`
+    are your first and last names (e.g. `lab05-gaston-sanchez.Rmd`).
+-   Knit your `Rmd` file as an html document (default option).
+
+------------------------------------------------------------------------
+
+## 1) Filestructure
+
+In your computer, create a directory (i.e. a folder) `lab05`. Likewise,
+create four subdirectories---`data`, `code`, `output`, `images`---as
+depicted in the file-structure shown below. You can try to use the
+`dir.create()` to create such directories (no need to include code
+chunks for this step in your Rmd file). Also, make sure to place your
+`Rmd` file inside the `lab05` directory.
+
+        lab05/
+          lab05-first-last.Rmd
+          data/
+          code/
+          output/
+          images/
+
+```{r}
+dir.create("data")
+dir.create("code")
+dir.create("output")
+dir.create("images")
+```
+
+### 1.1) Your Turn: using `write.csv()`
+
+a)  Use the function `write.csv()` to export (or save) the matrix
+    `state.x77` to a data file `states.csv` in the `data/` directory.
+    Also, see how to use the argument `row.names` to avoid including a
+    first column of numbers.
+
+```{r}
+# your code
+write.csv(state.x77,file = "data/states.csv",row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## 2) Diverting R output to external files
+
+Say you are interested in exporting the `summary()` statistics of the
+column `Area` in `state.x77`. Specifically, say you want to export the
+numeric output exactly in the same way they are displayed by R (see
+output below):
+
+```{r}
+summary(state.x77[ ,"Area"])
+```
+
+One naive option would be to manually copy the text displayed on the
+console, and then paste it to a text file. While this may work, it is
+labor intensive, error prone, and highly irreproducible. A better way to
+achieve this task is with the `sink()` function. Here's how:
+
+``` r
+# divert output to text file inside folder output/
+sink(file = 'output/summary-area.txt')
+summary(state.x77[ ,"Area"])
+sink()
+```
+
+The first call to `sink()` opens a connection to the specified file, and
+then all outputs are diverted to that location. The second call to
+`sink()`, i.e. the one without any arguments, closes the connection.
+
+### 2.1) Your turn: using `sink()`
+
+a)  Export the output of `summary()` by selecting columns `Population`,
+    `Income`, and `Area` of `state.x77` to a text file
+    `states-summary.txt`, in the `output/` folder.
+
+```{r}
+# your code
+sink("output/states-summary.txt")
+summary(state.x77[,c("Population","Income","Area")])
+sink()
+```
+
+<br>
+
+b)  Export the output of `summary()` by selecting rows of `state.x77`
+    with `Area` greater than 100,000 square miles, and columns
+    `Illiteracy`, `Murder` and `Area`. Export this `summary()` to a text
+    file `summary-large-states.txt` in the `output/` folder.
+
+```{r}
+# your code
+sink("output/summary-large-states.txt")
+summary(state.x77["Area">100000,c("Illiteracy","Murder","Area")])
+sink()
+```
+
+------------------------------------------------------------------------
+
+## 3) Exporting some graphics
+
+In the same way that R output as it appears on the console can be
+exported to some files, you can do the same with graphics and plots.
+Actually, saving plot images is much more common than `sink()`ing
+output.
+
+Base R provides a wide array of functions to save images in most common
+formats:
+
+-   `png()`
+-   `jpeg()`
+-   `tiff()`
+-   `bmp()`
+-   `svg()`
+-   `pdf()`
+
+Like the writing table functions such as `write.table()` or
+`write.csv()`, and the `sink()` function, the graphics device functions
+require a file name to be provided. Here's how to save a histogram of
+`Income` in png format to the file `histogram-income.png` inside the
+folder `images/`:
+
+``` r
+# saving a scatterplot in png format
+png(filename = "images/histogram-income.png")
+hist(state.x77[ ,"Income"])
+dev.off()
+```
+
+-   The function `png()` tells R to save the image in PNG format, using
+    the provided filename.
+
+-   Invoking `png()` will open a graphics device; not the graphics
+    device of RStudio, so you won't be able to see the graphic.
+
+-   The `plot()` function produces the scatterplot.
+
+-   The function `dev.off()` closes the graphics device.
+
+<br>
+
+### 3.1) Your turn: using `png()`, etc
+
+a)  Use `png()` to save a scatterplot of `Illiteracy` (x-axis) and
+    `Murder` (y-axis) with `plot()`. Save the graph in the `images/`
+    folder, naming the file as `scatterplot-illiteracy-murder.png`.
+
+```{r}
+# your code
+png("images/murder.png")
+plot(state.x77[,"Illiteracy"],state.x77[,"Murder"],xlab = "Illiteracy",ylab = "Murder")
+dev.off()
+```
+
+<br>
+
+b)  Use `pdf()` to save the previous histogram of `Income` in PDF
+    format, with dimensions (width x height) 6 x 4 inches.
+
+```{r}
+# your code
+pdf("images/histogram-income.pdf",width = 6, height = 4)
+hist(state.x77[ ,"Income"])
+dev.off()
+```
+
+------------------------------------------------------------------------
+
+## 4) Importing Data Tables
+
+Data sets come in many different presentations. One common format is
+that of a data table---like a spreadsheet---although you can find data
+in other formats (especially when the data is in its raw version).
+
+The folder for this lab (in bCourses) contains the following data
+text-files:
+
+-   `starwars1.txt`: *space separated* file
+
+-   `starwars2.csv`: *comma separated value* (CSV) file
+
+-   `starwars3.txt`: file with both metadata and data
+
+-   `starwars4.dat`: *fixed width format* (fwf) file
+
+**Download these files and place them in the same directory of your Rmd
+file**
+
+<br>
+
+Because data tables are so ubiquitous, it's good if you learn how to
+import them in R. In this section we are going to review various aspects
+that have to do with reading in tables in R.
+
+We will talk about the following functions (and packages)
+
+-   `read.table()`
+-   `read.csv()`
+-   `read.delim()`
+-   `read.fwf()`
+
+### 4.1) Function `read.table()`
+
+`read.table()` is the workhorse function to import tables in R. The
+mandatory input is the file-path of the file to be imported. The rest of
+the arguments have default values. Some arguments that are commonly
+specified are:
+
+-   `header`: whether the file contains column names
+
+-   `sep`: field separator character
+
+-   `col.names`: vector of optional names for the columns
+
+-   `na.strings`: character vector to indicate how missing values are
+    encoded
+
+-   `colClasses`: character vector to indicate data-types for the
+    columns
+
+-   `nrows`: maximum number of rows to read in
+
+-   `skip`: number of lines to skip before beginning to read data
+
+Here's an example to import the data in `starwars1.txt` with
+`read.table()`
+
+```{r}
+# reading data from your working directory
+sw1 <- read.table(
+  file = "starwars1.txt", 
+  header = TRUE)
+
+sw1
+```
+
+Notice that R uses some heuristics to decide---with an educated
+guess---the most appropriate data-type for each column. You can take
+full control of this decision with the `colClasses` argument. For
+example, say you want to import columns `gender` and `jedi` as
+`"factor"`:
+
+```{r}
+# reading data from your working directory
+sw1 <- read.table(
+  file = "starwars1.txt", 
+  header = TRUE,
+  colClasses = c(
+    "character", # name
+    "factor",    # gender
+    "double",    # height
+    "integer",   # weight
+    "factor",    # jedi
+    "character", # species
+    "character"  # weapon
+  )
+)
+
+sw1
+```
+
+<br>
+
+### 4.2) Your Turn: CSV file
+
+See the documentation of `read.csv()`, and use this function to import
+the data in `starwars2.csv`. Missing values in this file are encoded
+with a question mark character `"?"`. Name this data as `sw2`, and
+display it.
+
+```{r}
+# your code
+sw2 <- read.csv(file = "starwars2.csv",na.strings = "?")
+sw2
+```
+
+<br>
+
+### 4.3) Your Turn: importing a few columns
+
+Keep looking at the documentation of `read.table()`, and focus on the
+argument `colClasses`. How would you specify a vector for this argument
+in order to import just the columns `name`, `height`, and `weapon`? Name
+this data as `sw2b`, and display it.
+
+```{r}
+# your code
+sw2b <- read.csv(file = "starwars2.csv",colClasses = c("character","NULL","double","NULL","NULL","NULL","character"))
+sw2b
+```
+
+<br>
+
+### 4.4) Your Turn: File with metadata
+
+Take a look at the file `starwars3.txt`. As you can tell, this file has
+three sections:
+
+-   The first four lines of text have some general information with the
+    description of the file, its format, and units of measurement for
+    `height` and `weight`
+
+-   The next section, from line 6 to 13, indicates the names of the
+    columns
+
+-   The last section, from line 15 to 23, have the actual data table
+
+Your goal is to write commands, without hardcoding any values, in order
+to import the data table (with their corresponding column names). We
+recommend the following strategy:
+
+1)  use `readLines()` to import the first 13 lines into a character
+    vector
+
+2)  from the character vector of step (1), extract those elements that
+    correspond to the column names; this will give you a character
+    vector with just the column names
+
+3)  use a reading table function to import the data values from line 16
+    till the end of the file. *Hint*: argument `skip`---and possibly
+    `nrows`---is your friend. Likewise, use the vector of column names
+    previously extracted in the step (2) to specify values for the
+    argument `col.names`.
+
+4)  Name this data as `sw3`, and display it.
+
+```{r}
+# your code
+str <- readLines(con = "starwars3.txt", n = 13)
+str = str[7:13]
+sw3 <- read.table("starwars3.txt",skip = 15,col.names = str)
+sw3
+```
+
+<br>
+
+### 4.5) Your Turn: Fixed Width Format
+
+See the documentation of the function `read.fwf()`, and use this
+function to import the data in `starwars4.dat`.
+
+One suggestion to complete this operation is to specify arguments:
+
+-   name of the `file`
+
+-   skip the first line
+
+-   specify `col.names` with a character vector using the names in the
+    first line of the file: e.g. `name`, `gender`, `height`, `weight`
+
+-   specify column widths with a numeric vector; the widths are as
+    follow: 16 (1st column), 7 (2nd col), 7 (3rd col), and 7 (4th col)
+
+-   name this file `sw4` and display it
+
+```{r}
+# your code
+sw4 <- read.fwf("starwars4.dat",skip = 1, col.names = c("name","gender","height","weight"),widths = c(16,7,7,7))
+sw4
+```
