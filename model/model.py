@@ -34,6 +34,7 @@ def calculate_electricity_price(time: datetime):
 
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
+
 # print(tabulate(SunlightHistory_data, headers='keys', tablefmt='psql'))
 
 
@@ -45,11 +46,11 @@ class System:
         self.solar_size = solar
         self.solar_cost = self.solar_size * (500 / 10 / 12)
         self.battery_number = battery
-        self.battery_cost = 2 * self.battery_number + (1200 / 10 / 12)
         self.battery_unit_capacity = 10.5 * 0.9
         self.convert_cost = 500 * 3 / 5 / 12
         self.cost_effi = 0.95
         self.max_battery = self.battery_number * self.battery_unit_capacity
+        self.battery_cost = 2 * self.max_battery + (1200 / 10 / 12)
         if self.max_battery > 1500:
             assert False, "Battery size exceeds limit!"
         self.current_battery = self.max_battery
@@ -71,8 +72,8 @@ class System:
     def update(self, battery_charge):
         if not 0 - DELTA <= battery_charge + self.current_battery <= self.max_battery + DELTA:
             assert False, f"Battery amount invalid!, charge {battery_charge} to {battery_charge + self.current_battery}!"
-        solar = SunlightHistory_data.iloc[self.step]["Electricity"]
-        energy = EnergyHistory_data.iloc[self.step]["Consume"]
+        solar = SunlightHistory_data.iloc[self.step]["Electricity"]  # 单位面积太阳能发电量
+        energy = EnergyHistory_data.iloc[self.step]["Consume"]  # 用电量
         if solar * self.solar_size * self.cost_effi + DELTA < battery_charge:
             assert False, f"Not enough solar power for charging!"
 
@@ -178,14 +179,15 @@ def sb_stra(sy: System):
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-s = System(3000, 158)
+s = System(2950, 158)
 sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 with open("./part1.json", "w") as f:
+    print(s.get_result())
     f.write(s.get_json())
 
-# for i in range(150, 159):
-#     for j in range(2500, 4000, 50):
+# for i in range(60, 159, 5):
+#     for j in range(1, 3500, 100):
 #         s = System(j, i)
 #         sb_stra(s)
 #         print(j, i, round(s.get_result(), 4), sep=",")
