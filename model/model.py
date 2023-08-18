@@ -1,6 +1,7 @@
 import time
 from datetime import datetime, timedelta
 from tabulate import tabulate
+import json
 
 import pandas as pd
 
@@ -108,10 +109,10 @@ class System:
     def get_json(self):
         system_process = []
         for idx, val in enumerate(self.result):
-            val["energy_pv"] = round(val["energy_pv"], 4)
-            val["energy_bi"] = round(val["energy_bi"], 4)
-            val["energy_bo"] = round(val["energy_bo"], 4)
-            val["energy_pg"] = round(val["energy_pg"], 4)
+            val["energy_pv"] = round(val["energy_pv"], 4) + 1e-4
+            val["energy_bi"] = round(val["energy_bi"], 4) + 1e-4
+            val["energy_bo"] = round(val["energy_bo"], 4) + 1e-4
+            val["energy_pg"] = round(val["energy_pg"], 4) + 1e-4
 
             a = SunlightHistory_data.iloc[idx]
             b = EnergyHistory_data.iloc[idx]
@@ -122,14 +123,14 @@ class System:
             # TODO: 时间格式
             system_process.append(val)
 
-        return {
+        return json.dumps({
             "battery_number": self.battery_number,
             "pv_area": self.solar_size,
             "cost": round(self.get_result(), 4),
             "system_result": system_process,
             # "battery_life_consume": 0,
             # "battery_scheduling": [],
-        }
+        })
 
     def get_purchase(self):
         return self.electricity_cost, self.electricity_purchased
