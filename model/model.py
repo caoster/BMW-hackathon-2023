@@ -34,7 +34,7 @@ def calculate_electricity_price(time: datetime):
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
 
-# print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
+print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
 
 class System:
     def __init__(self, solar: int, battery: int):
@@ -173,16 +173,16 @@ with open("../data/Examples.csv", "r") as file:
 
 # print(round(s.get_result(), 4), sep=",")
 # print(s.get_purchase())
-print(s.get_json())
+# print(s.get_json())
 exit(0)
 
 s = System(1500, 150)
 sb_stra(s)
-print(round(s.get_result(), 4), s.get_purchase())
+# print(round(s.get_result(), 4), s.get_purchase())
 
 s = System(1500, 100)
 sb_stra(s)
-print(round(s.get_result(), 4), s.get_purchase())
+# print(round(s.get_result(), 4), s.get_purchase())
 
 # for i in range(1, 159, 5):
 #     for j in range(0, 3000, 30):

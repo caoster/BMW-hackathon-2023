@@ -138,12 +138,13 @@ int main()
                 printf("\"out_b%d\": %.4f,\n", i, -diff);
             }
             printf("\"left_b%d\": %.4f,\n", i, energy[hr][i]);
-            printf("\"life_b%d\": %.8f,\n", i, life[hr][i]);
+            printf("\"life_b%d\": %.8f", i, life[hr][i]);
+            puts(i == 120? "":",");
             
         }
-        puts("},");
+        puts(hr==hours?"}" : "},");
     }
-    puts("],");
+    puts("]");
     
     return 0;
 }
