@@ -13,6 +13,7 @@
 char line[buf_size];
 double change[32*24];
 double energy[32*24][123];
+double life[32*24][123];
 
 void eat()
 {
@@ -48,15 +49,17 @@ int main()
     
     double consume = 0.0;
     
-    std::set<std::pair<double, int>> bat;
+    std::set<std::pair<double, int> > bat;
     
     for (int i = 1; i <= 120; ++ i) {
         bat.insert(std::make_pair(cap, i));
         energy[0][i] = cap;
+        life[0][i] = 0.9;
     }
     for (int hr = 1; hr <= hours; ++hr) {
         for (int i = 1; i <= 120; ++ i) {
             energy[hr][i] = energy[hr - 1][i];
+            
         }
         double left_in = 0, left_out = 0;
         if (change[hr] > 0) {
@@ -113,18 +116,34 @@ int main()
             if (en < lbound || en > rbound) decay *= 1.05;
             if ((en - pre_en) * (nxt_en - en) < 0) decay += 1e-6;
             consume += decay;
+            life[hr][i] = life[hr - 1][i] - decay;
         }
     }
     
-    freopen("out.txt", "w", stdout);
-    printf("%.8f\n", consume);
-    
+    freopen("greedy_out.txt", "w", stdout);
+    printf("\"battery_life_consume\":%.8f\n", consume);
+    puts("\"battery_scheduling\":[\n");
     for (int hr = 1; hr <= hours; hr ++) {
+        int day = (hr - 1) / 24 + 1;
+        int hr_day = (hr - 1) % 24;
+        puts("{");
+        printf("\"date_time\": \"2023-05-%02d %02d:00:00\",\n", day, hr_day);
         for (int i = 1; i <= 120; ++i) {
-            printf("%.4f ", energy[hr][i]);
+            double diff = energy[hr][i] - energy[hr - 1][i];
+            if (diff > 0) {
+                printf("\"in_b%d\": %.4f,\n", i, diff);
+                printf("\"out_b%d\": %.4f,\n", i, 0.);
+            } else {
+                printf("\"in_b%d\": %.4f,\n", i, 0.);
+                printf("\"out_b%d\": %.4f,\n", i, -diff);
+            }
+            printf("\"left_b%d\": %.4f,\n", i, energy[hr][i]);
+            printf("\"life_b%d\": %.8f,\n", i, life[hr][i]);
+            
         }
-        puts("");
+        puts("},");
     }
+    puts("],");
     
     return 0;
 }
