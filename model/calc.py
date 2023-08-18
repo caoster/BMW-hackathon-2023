@@ -35,5 +35,5 @@ def use_battery(charge_list):
         diff_now = diff_next
         diff_next = charge_list[i + 1] - soc if i != len(charge_list) - 1 else 0
         sum += battery_decay(dod, soc, diff_now * diff_next < 0)
-        
-        
+    return sum
+    
