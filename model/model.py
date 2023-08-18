@@ -46,8 +46,7 @@ class System:
         self.battery_number = battery
         self.battery_cost = 2 * self.battery_number + (1200 / 10 / 12)
         self.battery_unit_capacity = 10.5 * 0.9
-        self.cost_solar = 500 * 3 / 5 / 12
-        self.convert_cost = 500
+        self.convert_cost = 500 * 3 / 5 / 12
         self.cost_effi = 0.95
         self.max_battery = self.battery_number * self.battery_unit_capacity
         if self.max_battery > 1500:
@@ -86,7 +85,6 @@ class System:
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi) / self.cost_effi
-        # print("iiiiii", pg)
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
         self.current_battery += battery_charge
@@ -121,7 +119,6 @@ class System:
             val["radiation"] = a["Radiation"]
             val["temperature"] = a["Temperature"]
             val["consume"] = b["Consume"]
-            # TODO: 小数点位数
             # TODO: 时间格式
             system_process.append(val)
 
