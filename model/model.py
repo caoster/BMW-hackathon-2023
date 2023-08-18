@@ -32,6 +32,8 @@ SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data
 
 class System:
     def __init__(self, solar: int, battery: int):
+        self.result = []
+
         global EnergyHistory_data, SunlightHistory_data
         self.solar = solar
         self.battery = battery
@@ -44,6 +46,7 @@ class System:
             assert False, "Battery size exceeds limit!"
         self.cost_battery = 1200 + 2 * self.battery
         self.current_battery = self.max_battery
+        self.electricity_cost = 0
 
         # These two shall be updated together!
         self.time = datetime(2023, 5, 1, 0)
@@ -54,6 +57,14 @@ class System:
         # "energy_bo": 150.0300,
         # "energy_pg": 0.0000
 
+    def _add_result(self, pv, bi, bo, pg):
+        self.result.append({
+            "energy_pv": pv,
+            "energy_bi": bi,
+            "energy_bo": bo,
+            "energy_pg": pg
+        })
+
     def update(self, battery_charge):
         if not 0 <= battery_charge + self.current_battery <= self.max_battery:
             assert False, f"Battery amount invalid!, {battery_charge} to {battery_charge + self.current_battery}!"
@@ -62,6 +73,19 @@ class System:
         if solar * self.cost_effi < battery_charge:
             assert False, f"Not enough solar power for charging!"
 
+        if battery_charge > 0:
+            bi = battery_charge
+            bo = 0
+        else:
+            bi = 0
+            bo = -battery_charge
+        pv = solar - battery_charge / self.cost_effi
+        pg = (energy - pv * self.cost_effi) / self.cost_effi
+        self.electricity_cost += calculate_electricity_price(self.time) * pg
+        # TODO: update amt of battery
+
+
+        self._add_result(pv, bi, bo, pg)
         self.time += timedelta(hours=1)
         self.step += 1
 
