@@ -16,7 +16,7 @@ def light_gen_electricity(rad, temp):
     T_R = 25
     delta = -0.47 * 0.01
     P_p_t = P_STC * G_AC * (1 + delta * (T_C - T_R)) / G_STC
-    return P_p_t
+    return P_p_t / 1000
 
 
 def calculate_electricity_price(time: datetime):
@@ -123,16 +123,31 @@ class System:
         }
 
 
-cost = 0
-for i in range(24 * 31):
-    v = EnergyHistory_data.iloc[i]
-    d = datetime.strptime(v["DateTime"], "%m/%d/%Y %H:%M")
-    cost += calculate_electricity_price(d) * v["Consume"] / 0.95
-print(cost)
+# cost = 0
+# for i in range(24 * 31):
+#     v = EnergyHistory_data.iloc[i]
+#     d = datetime.strptime(v["DateTime"], "%m/%d/%Y %H:%M")
+#     cost += calculate_electricity_price(d) * v["Consume"] / 0.95
+# print(cost)
+#
+# sy = System(0, 0)
+# for i in range(24 * 31):
+#     # print(sy.get_data())
+#     sy.update(0)
+# print(sy.get_result())
+# sy.get_json()
 
-sy = System(0, 0)
-for i in range(24 * 31):
-    # print(sy.get_data())
-    sy.update(0)
-print(sy.get_result())
-sy.get_json()
+def sb_stra(sy: System):
+    for i in range(24 * 31):
+        data = sy.get_data()
+        if data["solar"] * sy.cost_effi > data["consume"]:
+            sy.update(min(data["solar"] * sy.cost_effi - data["consume"], sy.max_battery - data["battery"]))
+        else:
+            sy.update(-min(data["consume"] - data["solar"] * sy.cost_effi, data["battery"]))
+
+
+for i in range(1, 159, 2):
+    for j in range(0, 3000, 30):
+        s = System(j, i)
+        sb_stra(s)
+        print(j, i, round(s.get_result(), 4), sep=",")
