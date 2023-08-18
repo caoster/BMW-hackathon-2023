@@ -30,6 +30,7 @@ def calculate_electricity_price(time: datetime):
 
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
+
 # print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
 
 class System:
@@ -37,7 +38,7 @@ class System:
         self.result = []
 
         global EnergyHistory_data, SunlightHistory_data
-        self.solar = solar
+        self.solar_size = solar
         self.battery = battery
         self.battery_unit_capacity = 10.5 * 0.9
         self.cost_solar = 500
@@ -54,11 +55,6 @@ class System:
         self.time = datetime(2023, 5, 1, 0)
         self.step = 0
 
-        # "energy_pv": 0.5500,
-        # "energy_bi": 0.0000,
-        # "energy_bo": 150.0300,
-        # "energy_pg": 0.0000
-
     def _add_result(self, pv, bi, bo, pg):
         self.result.append({
             "energy_pv": pv,
@@ -70,8 +66,8 @@ class System:
     def update(self, battery_charge):
         if not 0 <= battery_charge + self.current_battery <= self.max_battery:
             assert False, f"Battery amount invalid!, {battery_charge} to {battery_charge + self.current_battery}!"
-        solar = SunlightHistory_data.iloc[self.step]
-        energy = EnergyHistory_data.iloc[self.step]
+        solar = SunlightHistory_data.iloc[self.step]["Electricity"]
+        energy = EnergyHistory_data.iloc[self.step]["Consume"]
         if solar * self.cost_effi < battery_charge:
             assert False, f"Not enough solar power for charging!"
 
@@ -81,15 +77,39 @@ class System:
         else:
             bi = 0
             bo = -battery_charge
-        pv = solar - battery_charge / self.cost_effi
+        pv = solar * self.solar_size - battery_charge / self.cost_effi
+        pv = min(pv, energy / self.cost_effi)
+        # Here waste any more power
         pg = (energy - pv * self.cost_effi) / self.cost_effi
         self.electricity_cost += calculate_electricity_price(self.time) * pg
-        # TODO: update amt of battery
-
+        self.current_battery += battery_charge
+        # TODO: update battery cycle
 
         self._add_result(pv, bi, bo, pg)
         self.time += timedelta(hours=1)
         self.step += 1
 
+    def get_data(self):
+        return {
+            "time": self.time,
+            "battery": self.current_battery,
+            "solar": SunlightHistory_data.iloc[self.step]["Electricity"],
+            "consume": EnergyHistory_data.iloc[self.step]["Consume"]
+        }
 
-sy = System(10, 10)
+    def get_result(self):
+        print(self.electricity_cost)
+
+
+cost = 0
+for i in range(24 * 31):
+    v = EnergyHistory_data.iloc[i]
+    d = datetime.strptime(v["DateTime"], "%m/%d/%Y %H:%M")
+    cost += calculate_electricity_price(d) * v["Consume"] / 0.95
+print(cost)
+
+sy = System(0, 0)
+for i in range(24 * 31):
+    # print(sy.get_data())
+    sy.update(0)
+sy.get_result()
