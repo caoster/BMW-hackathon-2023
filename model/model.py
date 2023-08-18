@@ -39,15 +39,15 @@ class System:
 
         global EnergyHistory_data, SunlightHistory_data
         self.solar_size = solar
-        self.battery = battery
+        self.battery_number = battery
         self.battery_unit_capacity = 10.5 * 0.9
         self.cost_solar = 500
         self.cost_convert = 500
         self.cost_effi = 0.95
-        self.max_battery = self.battery * self.battery_unit_capacity
+        self.max_battery = self.battery_number * self.battery_unit_capacity
         if self.max_battery > 1500:
             assert False, "Battery size exceeds limit!"
-        self.cost_battery = 1200 + 2 * self.battery
+        self.cost_battery = 1200 + 2 * self.battery_number
         self.current_battery = self.max_battery
         self.electricity_cost = 0
 
@@ -98,7 +98,29 @@ class System:
         }
 
     def get_result(self):
-        print(self.electricity_cost)
+        return self.electricity_cost
+
+    def get_json(self):
+        system_process = []
+        for idx, val in enumerate(self.result):
+            a = SunlightHistory_data.iloc[idx]
+            b = EnergyHistory_data.iloc[idx]
+            val["date_time"] = a["DateTime"]
+            val["radiation"] = a["Radiation"]
+            val["temperature"] = a["Temperature"]
+            val["consume"] = b["Consume"]
+            # TODO: 小数点位数
+            # TODO: 时间格式
+            system_process.append(val)
+
+        return {
+            "battery_number": self.battery_number,
+            "pv_area": self.solar_size,
+            "cost": self.electricity_cost,
+            "system_result": system_process,
+            # "battery_life_consume": 0,
+            # "battery_scheduling": [],
+        }
 
 
 cost = 0
@@ -112,4 +134,5 @@ sy = System(0, 0)
 for i in range(24 * 31):
     # print(sy.get_data())
     sy.update(0)
-sy.get_result()
+print(sy.get_result())
+sy.get_json()
