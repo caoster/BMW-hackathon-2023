@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timedelta
 from tabulate import tabulate
 
@@ -39,15 +40,16 @@ class System:
 
         global EnergyHistory_data, SunlightHistory_data
         self.solar_size = solar
+        self.solar_cost = self.solar_size * (500 / 10 / 12)
         self.battery_number = battery
+        self.battery_cost = 2 * self.battery_number + (1200 / 10 / 12)
         self.battery_unit_capacity = 10.5 * 0.9
-        self.cost_solar = 500
-        self.cost_convert = 500
+        self.cost_solar = 500 * 3 / 5 / 12
+        self.convert_cost = 500
         self.cost_effi = 0.95
         self.max_battery = self.battery_number * self.battery_unit_capacity
         if self.max_battery > 1500:
             assert False, "Battery size exceeds limit!"
-        self.cost_battery = 1200 + 2 * self.battery_number
         self.current_battery = self.max_battery
         self.electricity_cost = 0
 
@@ -98,7 +100,7 @@ class System:
         }
 
     def get_result(self):
-        return self.electricity_cost
+        return self.electricity_cost + self.convert_cost + self.solar_cost + self.battery_cost
 
     def get_json(self):
         system_process = []
@@ -116,7 +118,7 @@ class System:
         return {
             "battery_number": self.battery_number,
             "pv_area": self.solar_size,
-            "cost": self.electricity_cost,
+            "cost": self.get_result(),
             "system_result": system_process,
             # "battery_life_consume": 0,
             # "battery_scheduling": [],
@@ -146,8 +148,12 @@ def sb_stra(sy: System):
             sy.update(-min(data["consume"] - data["solar"] * sy.cost_effi, data["battery"]))
 
 
-for i in range(1, 159, 2):
+a = time.time()
+for i in range(1, 159, 5):
     for j in range(0, 3000, 30):
         s = System(j, i)
         sb_stra(s)
         print(j, i, round(s.get_result(), 4), sep=",")
+
+    break
+print()
