@@ -5,5 +5,5 @@ part_2 = json.load(open("./part2/greedy_out.json"))
 
 result = part_1 | part_2
 
-with open("./result.json", "w") as f:
+with open("./submit.json", "w") as f:
     json.dump(result, f)
