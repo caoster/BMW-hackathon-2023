@@ -34,8 +34,8 @@ def calculate_electricity_price(time: datetime):
 
 SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
 
+# print(tabulate(SunlightHistory_data, headers='keys', tablefmt='psql'))
 
-print(tabulate(SunlightHistory_data, headers = 'keys', tablefmt = 'psql'))
 
 class System:
     def __init__(self, solar: int, battery: int):
@@ -109,10 +109,10 @@ class System:
     def get_json(self):
         system_process = []
         for idx, val in enumerate(self.result):
-            val["energy_pv"] = round(val["energy_pv"], 4) + 1e-4
-            val["energy_bi"] = round(val["energy_bi"], 4) + 1e-4
-            val["energy_bo"] = round(val["energy_bo"], 4) + 1e-4
-            val["energy_pg"] = round(val["energy_pg"], 4) + 1e-4
+            val["energy_pv"] = float(round(val["energy_pv"], 4))
+            val["energy_bi"] = float(round(val["energy_bi"], 4))
+            val["energy_bo"] = float(round(val["energy_bo"], 4))
+            val["energy_pg"] = float(round(val["energy_pg"], 4))
 
             a = SunlightHistory_data.iloc[idx]
             b = EnergyHistory_data.iloc[idx]
@@ -181,7 +181,8 @@ def sb_stra(sy: System):
 s = System(3000, 158)
 sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
-print(s.get_json())
+with open("./part1.json", "w") as f:
+    f.write(s.get_json())
 
 # for i in range(150, 159):
 #     for j in range(2500, 4000, 50):
