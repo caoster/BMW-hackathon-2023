@@ -56,6 +56,7 @@ class System:
         self.current_battery = self.max_battery
         self.electricity_cost = 0
         self.electricity_purchased = 0
+        self.wasted = 0
 
         # These two shall be updated together!
         self.time = datetime(2023, 5, 1, 0)
@@ -86,6 +87,8 @@ class System:
             bi = 0
             bo = -battery_charge
             pv = solar * self.solar_size
+        if pv > energy / self.cost_effi:
+            self.wasted += pv - energy / self.cost_effi
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi - bo * self.cost_effi * self.cost_effi) / self.cost_effi
@@ -171,25 +174,25 @@ def no_op(sy: System):
         sy.update(0)
 
 
-# total_purchased = 0
-s = System(2000, 120)
-with open("../sample.json", "r") as file:
-    file = json.load(file)
-    file = file["system_result"]
-    for i in file:
-        s.update(i["energy_bi"] - i["energy_bo"])
-        # total_purchased += i["energy_pg"]
-# print(total_purchased)
-
-with open("../sample.json", "r") as file:
-    file = json.load(file)
-    file = file["system_result"]
-    line = 0
-    for i in file:
-        assert abs(i["energy_bo"] - s.result[line]["energy_bo"]) < DELTA
-        assert abs(i["energy_bi"] - s.result[line]["energy_bi"]) < DELTA
-        assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
-        line += 1
+# # total_purchased = 0
+# s = System(2000, 120)
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     for i in file:
+#         s.update(i["energy_bi"] - i["energy_bo"])
+#         # total_purchased += i["energy_pg"]
+# # print(total_purchased)
+#
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     line = 0
+#     for i in file:
+#         assert abs(i["energy_bo"] - s.result[line]["energy_bo"]) < DELTA
+#         assert abs(i["energy_bi"] - s.result[line]["energy_bi"]) < DELTA
+#         assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
+#         line += 1
 
 # with open("../data/Examples.csv", "r") as file:
 #     for i in file:
@@ -210,12 +213,13 @@ with open("../sample.json", "r") as file:
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-s = System(2950, 158)
-sb_stra(s)
-# print(round(s.get_result(), 4), s.get_purchase())
-with open("./part1.json", "w") as f:
-    print(s.get_result())
-    f.write(s.get_json())
+# s = System(2950, 158)
+# sb_stra(s)
+# # print(round(s.get_result(), 4), s.get_purchase())
+# with open("./part1.json", "w") as f:
+#     print(s.get_result())
+#     f.write(s.get_json())
+# print(s.wasted)
 
 # for i in range(60, 159, 5):
 #     for j in range(1, 3500, 100):
