@@ -114,7 +114,7 @@ int main()
             double dod = abs(en - pre_en) / full;
             if (dod <= 0.5) decay *= dod / 0.5;
             if (en < lbound || en > rbound) decay *= 1.05;
-            if ((en - pre_en) * (nxt_en - en) < 0) decay += 1e-6;
+            if (en - pre_en > 0 && nxt_en <= en || en - pre_en < 0 && nxt_en >= en) decay += 1e-6;
             consume += decay;
             life[hr][i] = life[hr - 1][i] - decay;
         }
