@@ -80,13 +80,14 @@ class System:
         if battery_charge > 0:
             bi = battery_charge
             bo = 0
+            pv = solar * self.solar_size - bi / self.cost_effi
         else:
             bi = 0
             bo = -battery_charge
-        pv = solar * self.solar_size - battery_charge / self.cost_effi
+            pv = solar * self.solar_size
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
-        pg = (energy - pv * self.cost_effi) / self.cost_effi
+        pg = (energy - pv * self.cost_effi - bo * self.cost_effi * self.cost_effi) / self.cost_effi
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
         self.current_battery += battery_charge
@@ -172,7 +173,8 @@ def sb_stra(sy: System):
 #
 # print(round(s.get_result(), 4), sep=",")
 # print(s.get_purchase())
-# print(s.get_json())
+# with open("./part1.json", "w") as f:
+#     f.write(s.get_json())
 # exit(0)
 
 # s = System(1500, 150)
