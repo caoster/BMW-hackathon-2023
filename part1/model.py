@@ -1,5 +1,7 @@
 import time
 from datetime import datetime, timedelta
+
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 import json
 
@@ -163,8 +165,9 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
-        if data["time"].hour == 5:
-            print(data["battery"])
+        if data["time"].hour >= 24 or 0 <= data["time"].hour <= 4:
+            sy.update(0)
+            continue
         if data["solar"] * sy.cost_effi > data["consume"]:
             sy.update((min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"])))
         else:
@@ -215,17 +218,28 @@ def no_op(sy: System):
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-# s = System(2950, 158)
+
+# s = System(2861, 158)
 # sb_stra(s)
-# # print(round(s.get_result(), 4), s.get_purchase())
+# print(round(s.get_result(), 4), s.get_purchase())
 # with open("./part1.json", "w") as f:
 #     print(s.get_result())
 #     f.write(s.get_json())
 # print(s.wasted)
 # print(s.get_purchase()[2])
 
+# init_time = datetime(2023, 5, 1, 0)
+# pg_5_6_7 = [0] * 31
+# for i in s.result:
+#     if 5 <= init_time.hour < 8:
+#         pg_5_6_7[init_time.day - 1] += i["energy_pg"]
+#     init_time += timedelta(hours=1)
+# print(pg_5_6_7)
+# plt.plot(range(1, 32), pg_5_6_7)
+# plt.show()
+
 # for i in range(158, 159, 5):
-#     for j in range(1, 3500, 100):
+#     for j in range(2850, 2926, 1):
 #         s = System(j, i)
 #         sb_stra(s)
 #         print(j, i, round(s.get_result(), 4), sep=",")
