@@ -165,7 +165,7 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
-        if data["time"].hour >= 24 or 0 <= data["time"].hour <= 4:
+        if 0 <= data["time"].hour <= 4:
             sy.update(0)
             continue
         if data["solar"] * sy.cost_effi > data["consume"]:
@@ -219,9 +219,9 @@ def no_op(sy: System):
 # print(round(s.get_result(), 4), s.get_purchase())
 #
 
-# s = System(2861, 158)
-# sb_stra(s)
-# print(round(s.get_result(), 4), s.get_purchase())
+s = System(2861, 158)
+sb_stra(s)
+print(round(s.get_result(), 4), s.get_purchase())
 # with open("./part1.json", "w") as f:
 #     print(s.get_result())
 #     f.write(s.get_json())

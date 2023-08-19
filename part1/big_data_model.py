@@ -7,43 +7,46 @@ import matplotlib.pyplot as plt
 
 DELTA = 1e-3
 
-EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
-Table = pd.read_csv("../data/SunlightHistory.csv")
-Table["Consume"] = EnergyHistory_data["Consume"]
-del EnergyHistory_data
+Table = None
 
 
-def light_gen_electricity(rad, temp):
-    P_STC = 250
-    G_AC = rad
-    G_STC = 1000
-    T_E = temp
-    T_C = T_E + 30 * G_AC / 1000
-    T_R = 25
-    delta = -0.47 * 0.01
-    P_p_t = P_STC * G_AC * (1 + delta * (T_C - T_R)) / G_STC
-    return P_p_t / 1000
+def init_table():
+    EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
+    Table = pd.read_csv("../data/SunlightHistory.csv")
+    Table["Consume"] = EnergyHistory_data["Consume"]
+    del EnergyHistory_data
 
+    def light_gen_electricity(rad, temp):
+        P_STC = 250
+        G_AC = rad
+        G_STC = 1000
+        T_E = temp
+        T_C = T_E + 30 * G_AC / 1000
+        T_R = 25
+        delta = -0.47 * 0.01
+        P_p_t = P_STC * G_AC * (1 + delta * (T_C - T_R)) / G_STC
+        return P_p_t / 1000
 
-def calculate_electricity_price(time: datetime):
-    if 8 <= time.hour < 12 or 17 <= time.hour < 21:
-        return 0.628
-    elif 5 <= time.hour < 8 or 12 <= time.hour < 17 or 21 <= time.hour < 22:
-        return 0.529
-    else:
-        return 0.450
+    def calculate_electricity_price(time: datetime):
+        if 8 <= time.hour < 12 or 17 <= time.hour < 21:
+            return 0.628
+        elif 5 <= time.hour < 8 or 12 <= time.hour < 17 or 21 <= time.hour < 22:
+            return 0.529
+        else:
+            return 0.450
 
+    Table["UnitSolar"] = light_gen_electricity(Table["Radiation"], Table["Temperature"])
+    Table["DateTime"] = pd.to_datetime(Table["DateTime"], format="%m/%d/%Y %H:%M")
+    Table["PriceUnit"] = Table["DateTime"].apply(calculate_electricity_price)
 
-Table["UnitSolar"] = light_gen_electricity(Table["Radiation"], Table["Temperature"])
-Table["DateTime"] = pd.to_datetime(Table["DateTime"], format="%m/%d/%Y %H:%M")
-Table["PriceUnit"] = Table["DateTime"].apply(calculate_electricity_price)
+    Table["energy_pv"] = 0.0
+    Table["energy_bi"] = 0.0
+    Table["energy_bo"] = 0.0
+    Table["energy_pg"] = 0.0
+    Table["battery_after"] = 0.0
+    Table["waste_solar"] = 0.0
 
-Table["energy_pv"] = 0.0
-Table["energy_bi"] = 0.0
-Table["energy_bo"] = 0.0
-Table["energy_pg"] = 0.0
-Table["battery_after"] = 0.0
-Table["waste_solar"] = 0.0
+    return Table
 
 
 class System:
@@ -134,7 +137,7 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
-        if data["time"].hour >= 24 or 0 <= data["time"].hour <= 4:
+        if 0 <= data["time"].hour <= 4:
             sy.update(0)
             continue
         if data["solar"] * sy.cost_effi > data["consume"]:
@@ -143,6 +146,46 @@ def sb_stra(sy: System):
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
 
-s = System(2861, 158)
-sb_stra(s)
-print(round(s.get_result(), 4))
+# 0 : use battery
+# 1 : no use battery
+def zws_stra(solar, battery, input_list: list):
+    sy = System(solar, battery)
+    segment = {1: (5, 7), 2: (8, 11), 3: (12, 16), 4: (21, 4 + 24)}  # 17~20 insert
+    time_list = [0] * 5
+    for idx, val in enumerate(input_list):
+        now = idx % 4 + 1
+        num = segment[now][1] - segment[now][0] + 1
+        time_list += [val] * num
+        if now == 3:
+            time_list += [0, 0, 0, 0]  # 17~20
+    for i in range(24 * 31):
+        data = sy.get_data()
+        if data["solar"] * sy.cost_effi > data["consume"]:
+            sy.update(max(
+                (min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"]) - DELTA)
+                , 0))
+        else:
+            if time_list[i] == 0:  # use battery
+                sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
+            else:  # no use battery
+                sy.update(0)
+    return sy
+
+
+# Table = init_table()
+# s = System(2861, 158)
+# sb_stra(s)
+# print(round(s.get_result(), 4))
+
+for i in range(2850, 2870, 2):
+    Table = init_table()
+
+    good_list = [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
+                 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+                 1, 0]
+    sy = zws_stra(i, 158, good_list)
+
+    print(i, sy.get_result())
+    # print(Table["waste_solar"].sum())
+
+pass
