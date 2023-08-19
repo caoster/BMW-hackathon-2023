@@ -159,7 +159,9 @@ def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
         if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]))
+            sy.update(max(
+                (min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]) - DELTA)
+                , 0))
         else:
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
@@ -169,23 +171,25 @@ def no_op(sy: System):
         sy.update(0)
 
 
-# # total_purchased = 0
-# s = System(2000, 120)
-# with open("../sample.json", "r") as file:
-#     file = json.load(file)
-#     file = file["system_result"]
-#     for i in file:
-#         s.update(i["energy_bi"] - i["energy_bo"])
-#         # total_purchased += i["energy_pg"]
-# # print(total_purchased)
-#
-# with open("../sample.json", "r") as file:
-#     file = json.load(file)
-#     file = file["system_result"]
-#     line = 0
-#     for i in file:
-#         assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
-#         line += 1
+# total_purchased = 0
+s = System(2000, 120)
+with open("../sample.json", "r") as file:
+    file = json.load(file)
+    file = file["system_result"]
+    for i in file:
+        s.update(i["energy_bi"] - i["energy_bo"])
+        # total_purchased += i["energy_pg"]
+# print(total_purchased)
+
+with open("../sample.json", "r") as file:
+    file = json.load(file)
+    file = file["system_result"]
+    line = 0
+    for i in file:
+        assert abs(i["energy_bo"] - s.result[line]["energy_bo"]) < DELTA
+        assert abs(i["energy_bi"] - s.result[line]["energy_bi"]) < DELTA
+        assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
+        line += 1
 
 # with open("../data/Examples.csv", "r") as file:
 #     for i in file:
