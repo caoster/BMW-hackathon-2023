@@ -215,14 +215,14 @@ def no_op(sy: System):
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-s = System(2950, 158)
-sb_stra(s)
-# print(round(s.get_result(), 4), s.get_purchase())
-with open("./part1.json", "w") as f:
-    print(s.get_result())
-    f.write(s.get_json())
-print(s.wasted)
-print(s.get_purchase()[2])
+# s = System(2950, 158)
+# sb_stra(s)
+# # print(round(s.get_result(), 4), s.get_purchase())
+# with open("./part1.json", "w") as f:
+#     print(s.get_result())
+#     f.write(s.get_json())
+# print(s.wasted)
+# print(s.get_purchase()[2])
 
 # for i in range(158, 159, 5):
 #     for j in range(1, 3500, 100):
