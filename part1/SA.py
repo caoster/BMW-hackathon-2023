@@ -15,9 +15,10 @@ def zws_stra(input_list: list):
     for i in range(24 * 31):
         data = sy.get_data()
         if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(max(
-                (min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]) - DELTA)
-                , 0))
+            sy.update((min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"])))
+            # sy.update(max(
+            #     (min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"]) - DELTA)
+            #     , 0))
         else:
             if time_list[i] == 0:  # use battery
                 sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))

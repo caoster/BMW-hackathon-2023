@@ -41,6 +41,7 @@ SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data
 class System:
     def __init__(self, solar: int, battery: int):
         self.result = []
+        self.purchase_by_time = [0] * 24
 
         global EnergyHistory_data, SunlightHistory_data
         self.solar_size = solar
@@ -96,6 +97,7 @@ class System:
         assert pg + DELTA >= 0
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
+        self.purchase_by_time[self.time.hour] += pg
         self.current_battery += battery_charge
         # TODO: update battery cycle
 
@@ -141,7 +143,7 @@ class System:
         })
 
     def get_purchase(self):
-        return self.electricity_cost, self.electricity_purchased
+        return self.electricity_cost, self.electricity_purchased, self.purchase_by_time
 
 
 # cost = 0
@@ -161,10 +163,10 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
+        if data["time"].hour == 5:
+            print(data["battery"])
         if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(max(
-                (min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]) - DELTA)
-                , 0))
+            sy.update((min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"])))
         else:
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
@@ -213,15 +215,16 @@ def no_op(sy: System):
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-# s = System(2950, 158)
-# sb_stra(s)
-# # print(round(s.get_result(), 4), s.get_purchase())
-# with open("./part1.json", "w") as f:
-#     print(s.get_result())
-#     f.write(s.get_json())
-# print(s.wasted)
+s = System(2950, 158)
+sb_stra(s)
+# print(round(s.get_result(), 4), s.get_purchase())
+with open("./part1.json", "w") as f:
+    print(s.get_result())
+    f.write(s.get_json())
+print(s.wasted)
+print(s.get_purchase()[2])
 
-# for i in range(60, 159, 5):
+# for i in range(158, 159, 5):
 #     for j in range(1, 3500, 100):
 #         s = System(j, i)
 #         sb_stra(s)
