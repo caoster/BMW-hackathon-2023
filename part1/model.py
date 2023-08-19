@@ -1,5 +1,7 @@
 import time
 from datetime import datetime, timedelta
+
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 import json
 
@@ -41,6 +43,7 @@ SunlightHistory_data["Electricity"] = light_gen_electricity(SunlightHistory_data
 class System:
     def __init__(self, solar: int, battery: int):
         self.result = []
+        self.purchase_by_time = [0] * 24
 
         global EnergyHistory_data, SunlightHistory_data
         self.solar_size = solar
@@ -56,6 +59,7 @@ class System:
         self.current_battery = self.max_battery
         self.electricity_cost = 0
         self.electricity_purchased = 0
+        self.wasted = 0
 
         # These two shall be updated together!
         self.time = datetime(2023, 5, 1, 0)
@@ -86,6 +90,8 @@ class System:
             bi = 0
             bo = -battery_charge
             pv = solar * self.solar_size
+        if pv > energy / self.cost_effi:
+            self.wasted += pv - energy / self.cost_effi
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi - bo * self.cost_effi * self.cost_effi) / self.cost_effi
@@ -93,6 +99,7 @@ class System:
         assert pg + DELTA >= 0
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
+        self.purchase_by_time[self.time.hour] += pg
         self.current_battery += battery_charge
         # TODO: update battery cycle
 
@@ -138,7 +145,7 @@ class System:
         })
 
     def get_purchase(self):
-        return self.electricity_cost, self.electricity_purchased
+        return self.electricity_cost, self.electricity_purchased, self.purchase_by_time
 
 
 # cost = 0
@@ -158,10 +165,11 @@ class System:
 def sb_stra(sy: System):
     for i in range(24 * 31):
         data = sy.get_data()
+        if data["time"].hour >= 24 or 0 <= data["time"].hour <= 4:
+            sy.update(0)
+            continue
         if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(max(
-                (min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]) - DELTA)
-                , 0))
+            sy.update((min((data["solar"] * sy.cost_effi - data["consume"]), sy.max_battery - data["battery"])))
         else:
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
@@ -171,25 +179,25 @@ def no_op(sy: System):
         sy.update(0)
 
 
-# total_purchased = 0
-s = System(2000, 120)
-with open("../sample.json", "r") as file:
-    file = json.load(file)
-    file = file["system_result"]
-    for i in file:
-        s.update(i["energy_bi"] - i["energy_bo"])
-        # total_purchased += i["energy_pg"]
-# print(total_purchased)
-
-with open("../sample.json", "r") as file:
-    file = json.load(file)
-    file = file["system_result"]
-    line = 0
-    for i in file:
-        assert abs(i["energy_bo"] - s.result[line]["energy_bo"]) < DELTA
-        assert abs(i["energy_bi"] - s.result[line]["energy_bi"]) < DELTA
-        assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
-        line += 1
+# # total_purchased = 0
+# s = System(2000, 120)
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     for i in file:
+#         s.update(i["energy_bi"] - i["energy_bo"])
+#         # total_purchased += i["energy_pg"]
+# # print(total_purchased)
+#
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     line = 0
+#     for i in file:
+#         assert abs(i["energy_bo"] - s.result[line]["energy_bo"]) < DELTA
+#         assert abs(i["energy_bi"] - s.result[line]["energy_bi"]) < DELTA
+#         assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
+#         line += 1
 
 # with open("../data/Examples.csv", "r") as file:
 #     for i in file:
@@ -210,15 +218,28 @@ with open("../sample.json", "r") as file:
 # sb_stra(s)
 # print(round(s.get_result(), 4), s.get_purchase())
 #
-s = System(2950, 158)
-sb_stra(s)
-# print(round(s.get_result(), 4), s.get_purchase())
-with open("./part1.json", "w") as f:
-    print(s.get_result())
-    f.write(s.get_json())
 
-# for i in range(60, 159, 5):
-#     for j in range(1, 3500, 100):
+# s = System(2861, 158)
+# sb_stra(s)
+# print(round(s.get_result(), 4), s.get_purchase())
+# with open("./part1.json", "w") as f:
+#     print(s.get_result())
+#     f.write(s.get_json())
+# print(s.wasted)
+# print(s.get_purchase()[2])
+
+# init_time = datetime(2023, 5, 1, 0)
+# pg_5_6_7 = [0] * 31
+# for i in s.result:
+#     if 5 <= init_time.hour < 8:
+#         pg_5_6_7[init_time.day - 1] += i["energy_pg"]
+#     init_time += timedelta(hours=1)
+# print(pg_5_6_7)
+# plt.plot(range(1, 32), pg_5_6_7)
+# plt.show()
+
+# for i in range(158, 159, 5):
+#     for j in range(2850, 2926, 1):
 #         s = System(j, i)
 #         sb_stra(s)
 #         print(j, i, round(s.get_result(), 4), sep=",")
