@@ -327,8 +327,8 @@ hour_cost = [0] * 24
 for idx, row in Table.iterrows():
     hour_cost[row["DateTime"].hour - 1] += row["UnitSolar"]
 
-plt.scatter(list(range(24)), hour_cost, label="Grid Power Price")
-plt.scatter(list(range(24)), price, label="Average Solar Power")
+plt.plot(list(range(24)), hour_cost, label="Average Solar Power", linewidth=3.0)
+plt.plot(list(range(24)), price, label="Grid Power Price", linewidth=3.0)
 plt.legend()
 plt.savefig("./figure/grid_price.png", dpi=300)
 plt.show()
