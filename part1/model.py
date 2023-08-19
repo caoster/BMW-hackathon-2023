@@ -217,34 +217,8 @@ with open("./part1.json", "w") as f:
     print(s.get_result())
     f.write(s.get_json())
 
-
 # for i in range(60, 159, 5):
 #     for j in range(1, 3500, 100):
 #         s = System(j, i)
 #         sb_stra(s)
 #         print(j, i, round(s.get_result(), 4), sep=",")
-
-# 0 : use battery
-# 1 : no use battery
-def zws_stra(sy: System, input_list: list):
-    segment = {1: (5, 7), 2: (8, 11), 3: (12, 16), 4: (17, 20), 5: (21, 4 + 24)}
-    time_list = [0] * 5
-    for idx, val in enumerate(input_list):
-        num = segment[idx % 5 + 1][1] - segment[idx % 5 + 1][0] + 1
-        time_list += [val] * num
-    print(time_list, len(time_list))
-    for i in range(24 * 31):
-        data = sy.get_data()
-        if data["solar"] * sy.cost_effi > data["consume"]:
-            sy.update(max(
-                (min((data["solar"] * sy.cost_effi - data["consume"]) * sy.cost_effi, sy.max_battery - data["battery"]) - DELTA)
-                , 0))
-        else:
-            if time_list[i] == 0:  # use battery
-                sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
-            else:  # no use battery
-                sy.update(0)
-
-
-sy = System(2950, 158)
-zws_stra(sy, input_list)
