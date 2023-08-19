@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 DELTA = 1e-3
 
@@ -36,3 +37,20 @@ Table["UnitSolar"] = light_gen_electricity(Table["Radiation"], Table["Temperatur
 del Table["Radiation"], Table["Temperature"]
 Table["DateTime"] = pd.to_datetime(Table["DateTime"], format="%m/%d/%Y %H:%M")
 Table["PriceUnit"] = Table["DateTime"].apply(calculate_electricity_price)
+
+# Table.plot(x="DateTime", y=["Consume", "UnitSolar", "PriceUnit"], legend=True)
+# plt.plot(Table["DateTime"], Table["UnitSolar"], label="UnitSolar")
+# plt.savefig("UnitSolar.png")
+# plt.show()
+
+# UnitSolar_combined = [0] * 24
+# for i in range(len(Table)):
+#     UnitSolar_combined[Table.iloc[i]["DateTime"].hour] += Table.iloc[i]["UnitSolar"]
+#
+# plt.plot(range(1, 25), UnitSolar_combined, label="UnitSolar")
+# plt.savefig("UnitSolar.png")
+# plt.show()
+
+for i in range(31):
+    plt.plot(range(1, 25), Table["UnitSolar"].iloc[(24 * i):(24 * i + 24)], label=f"Week{i + 1}")
+plt.savefig("UnitSolar.png", dpi=1000)
