@@ -50,7 +50,7 @@ class System:
         self.convert_cost = 500 * 3 / 5 / 12
         self.cost_effi = 0.95
         self.max_battery = self.battery_number * self.battery_unit_capacity
-        self.battery_cost = 2 * self.max_battery + (1200 / 10 / 12)
+        self.battery_cost = ((2 * self.max_battery + 1200) / 10 / 12)
         if self.max_battery > 1500:
             assert False, "Battery size exceeds limit!"
         self.current_battery = self.max_battery
@@ -70,6 +70,7 @@ class System:
         })
 
     def update(self, battery_charge):
+        assert datetime.strptime(EnergyHistory_data.iloc[self.step]["DateTime"], "%m/%d/%Y %H:%M") == self.time
         if not 0 - DELTA <= battery_charge + self.current_battery <= self.max_battery + DELTA:
             assert False, f"Battery amount invalid!, charge {battery_charge} to {battery_charge + self.current_battery}!"
         solar = SunlightHistory_data.iloc[self.step]["Electricity"]  # 单位面积太阳能发电量
@@ -88,6 +89,8 @@ class System:
         pv = min(pv, energy / self.cost_effi)
         # Here waste any more power
         pg = (energy - pv * self.cost_effi - bo * self.cost_effi * self.cost_effi) / self.cost_effi
+        # pg = energy / self.cost_effi - pv - bo * self.cost_effi
+        assert pg + DELTA >= 0
         self.electricity_cost += calculate_electricity_price(self.time) * pg
         self.electricity_purchased += pg
         self.current_battery += battery_charge
@@ -161,7 +164,29 @@ def sb_stra(sy: System):
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
 
+def no_op(sy: System):
+    for i in range(24 * 31):
+        sy.update(0)
+
+
+# # total_purchased = 0
 # s = System(2000, 120)
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     for i in file:
+#         s.update(i["energy_bi"] - i["energy_bo"])
+#         # total_purchased += i["energy_pg"]
+# # print(total_purchased)
+#
+# with open("../sample.json", "r") as file:
+#     file = json.load(file)
+#     file = file["system_result"]
+#     line = 0
+#     for i in file:
+#         assert abs(i["energy_pg"] - s.result[line]["energy_pg"]) < DELTA
+#         line += 1
+
 # with open("../data/Examples.csv", "r") as file:
 #     for i in file:
 #         if 'date_time' in i:
@@ -170,7 +195,7 @@ def sb_stra(sy: System):
 #         bo = float(i[6])
 #         bi = float(i[5])
 #         s.update(bi - bo)
-#
+
 # print(round(s.get_result(), 4), sep=",")
 # print(s.get_purchase())
 # with open("./part1.json", "w") as f:
