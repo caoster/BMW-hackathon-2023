@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-EnergyHistory_data = pd.read_csv("./data/EnergyHistory.csv")
+EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
 print(EnergyHistory_data)
 
 print(EnergyHistory_data["Consume"].mean())
@@ -12,7 +12,7 @@ print(EnergyHistory_data["Consume"].mean())
 
 plt.plot(EnergyHistory_data["DateTime"].values, EnergyHistory_data["Consume"].values)
 plt.title("DateTime-Consume")
-plt.savefig("./vis/DateTime-Consume")
+plt.savefig("./DateTime-Consume")
 plt.clf()
 
 
@@ -28,11 +28,11 @@ def light_gen_electricity(rad, temp):
     return P_p_t
 
 
-SunlightHistory_data = pd.read_csv("./data/SunlightHistory.csv")
+SunlightHistory_data = pd.read_csv("../data/SunlightHistory.csv")
 print(SunlightHistory_data)
 SunlightHistory_data["elec"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
-SunlightHistory_data.to_csv("./vis/DateTime-Sunlight_processed.csv")
+SunlightHistory_data.to_csv("./DateTime-Sunlight_processed.csv")
 plt.plot(SunlightHistory_data["DateTime"].values, SunlightHistory_data["elec"].values)
 plt.title("DateTime-Sunlight")
-plt.savefig("./vis/DateTime-Sunlight")
+plt.savefig("./DateTime-Sunlight")
 plt.clf()
