@@ -12,7 +12,6 @@ def zws_stra(input_list: list):
     for idx, val in enumerate(input_list):
         num = segment[idx % 5 + 1][1] - segment[idx % 5 + 1][0] + 1
         time_list += [val] * num
-    print(time_list, len(time_list))
     for i in range(24 * 31):
         data = sy.get_data()
         if data["solar"] * sy.cost_effi > data["consume"]:
@@ -61,7 +60,7 @@ class SA:
                 mcount = self.M
                 T *= self.lam
         result = self.C(v)
-        if result < min:
+        if result < self.min:
             self.min = result
             self.best = v
 
@@ -70,9 +69,10 @@ class SA:
         return self.min, self.best
 
 
-lam = 0.99  # 降温速率
-eta = 100  # 终止条件
-M = 100  # Markov重复次数
+lam = 0.8  # 降温速率
+eta = 0.8  # 终止条件
+M = 10  # Markov重复次数
 T_0 = 273  # 初始温度
 sa = SA(lam, eta, M, T_0, zws_stra)
-sa.run()
+while True:
+    sa.run()
