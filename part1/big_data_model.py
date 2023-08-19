@@ -146,10 +146,7 @@ def sb_stra(sy: System):
             sy.update(-min((data["consume"] - data["solar"] * sy.cost_effi) / sy.cost_effi / sy.cost_effi, data["battery"]))
 
 
-# 0 : use battery
-# 1 : no use battery
-def zws_stra(solar, battery, input_list: list):
-    sy = System(solar, battery)
+def get_time_list(input_list):
     segment = {1: (5, 7), 2: (8, 11), 3: (12, 16), 4: (21, 4 + 24)}  # 17~20 insert
     time_list = [0] * 5
     for idx, val in enumerate(input_list):
@@ -158,6 +155,14 @@ def zws_stra(solar, battery, input_list: list):
         time_list += [val] * num
         if now == 3:
             time_list += [0, 0, 0, 0]  # 17~20
+    return time_list
+
+
+# 0 : use battery
+# 1 : no use battery
+def zws_stra(solar, battery, input_list: list):
+    sy = System(solar, battery)
+    time_list = get_time_list(input_list)
     for i in range(24 * 31):
         data = sy.get_data()
         if data["solar"] * sy.cost_effi > data["consume"]:
@@ -177,15 +182,154 @@ def zws_stra(solar, battery, input_list: list):
 # sb_stra(s)
 # print(round(s.get_result(), 4))
 
-for i in range(2850, 2870, 2):
+# Table = init_table()
+#
+good_list = [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
+             1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+             1, 0]
+# list_by_hour = get_time_list(good_list)[:745]
+# sy = zws_stra(2860, 158, good_list)
+
+plt.rcParams["date.autoformatter.day"] = "%m-%d"
+
+
+def base_line():
+    sy = System(0, 0)
+    for i in range(24 * 31):
+        sy.update(0)
+    return sy
+
+
+def plot_base_line():
+    global Table
     Table = init_table()
+    sy = base_line()
 
-    good_list = [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
-                 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
-                 1, 0]
-    sy = zws_stra(i, 158, good_list)
+    time_span = []
+    time_span_day = []
+    day_cost = [0] * 31
+    for idx, row in Table.iterrows():
+        if row["DateTime"].day not in time_span_day:
+            time_span.append(row["DateTime"])
+            time_span_day.append(row["DateTime"].day)
+        day_cost[row["DateTime"].day - 1] += row["energy_pg"] * row["PriceUnit"]
 
-    print(i, sy.get_result())
-    # print(Table["waste_solar"].sum())
+    plt.plot(time_span, day_cost, label="BaseLine")
+    # plt.plot(Table["DateTime"], Table["Consume"], label="Consume")
+    # plt.plot(Table["DateTime"], Table["waste_solar"], label="WasteSolar")
+    # plt.legend()
+    # plt.ylim(0, 2400)
+    # plt.title("Only grid power")
+    # plt.show()
 
+
+plot_base_line()
+
+
+def solar_only():
+    sy = System(2888, 0)
+    for i in range(24 * 31):
+        sy.update(0)
+    return sy
+
+
+def plot_solar_only():
+    global Table
+    Table = init_table()
+    sy = solar_only()
+
+    time_span = []
+    time_span_day = []
+    day_cost = [0] * 31
+    for idx, row in Table.iterrows():
+        if row["DateTime"].day not in time_span_day:
+            time_span.append(row["DateTime"])
+            time_span_day.append(row["DateTime"].day)
+        day_cost[row["DateTime"].day - 1] += row["energy_pg"] * row["PriceUnit"] + 400 / 24
+
+    plt.plot(time_span, day_cost, label="Solar only")
+
+    # plt.plot(Table["DateTime"], Table["Consume"], label="Consume")
+    # plt.plot(Table["DateTime"], Table["waste_solar"], label="WasteSolar")
+    # plt.legend()
+    # plt.ylim(0, 600)
+    # plt.title("Solar panel direct supply")
+    # plt.show()
+
+
+plot_solar_only()
+
+
+def plot_sb():
+    global Table
+    Table = init_table()
+    sy = System(2860, 158)
+    sb_stra(sy)
+
+    time_span = []
+    time_span_day = []
+    day_cost = [0] * 31
+    for idx, row in Table.iterrows():
+        if row["DateTime"].day not in time_span_day:
+            time_span.append(row["DateTime"])
+            time_span_day.append(row["DateTime"].day)
+        day_cost[row["DateTime"].day - 1] += row["energy_pg"] * row["PriceUnit"] + 400 / 24
+
+    plt.plot(time_span, day_cost, label="Battery")
+
+    # plt.plot(Table["DateTime"], Table["Consume"], label="Consume")
+    # plt.plot(Table["DateTime"], Table["waste_solar"], label="WasteSolar")
+    # plt.legend()
+    # plt.ylim(0, 600)
+    # plt.title("Consumption first, Battery sleep at night")
+    # plt.show()
+
+
+plot_sb()
+
+
+def plot_zws():
+    global Table
+    Table = init_table()
+    sy = zws_stra(2860, 158, good_list)
+
+    time_span = []
+    time_span_day = []
+    day_cost = [0] * 31
+    for idx, row in Table.iterrows():
+        if row["DateTime"].day not in time_span_day:
+            time_span.append(row["DateTime"])
+            time_span_day.append(row["DateTime"].day)
+        day_cost[row["DateTime"].day - 1] += row["energy_pg"] * row["PriceUnit"] + 400 / 24
+
+    plt.plot(time_span, day_cost, label="Smart battery")
+
+    # plt.plot(Table["DateTime"], Table["Consume"], label="Consume")
+    # plt.plot(Table["DateTime"], Table["waste_solar"], label="WasteSolar")
+    # plt.legend()
+    # plt.ylim(0, 600)
+    # plt.title("Simulated annealing")
+    # plt.show()
+
+
+plot_zws()
+
+plt.legend()
+plt.ylim(0, 2400)
+plt.title("Cost per Day")
+plt.savefig("./figure/cost_per_day.png", dpi=300)
+plt.show()
+
+# print((Table["energy_pg"] * Table["PriceUnit"]).sum())
+# plt.scatter(Table["DateTime"].apply(lambda x: x.hour), Table["battery_after"])
+# plt.show()
+# for i in range(31):
+#     plt.plot(Table["DateTime"].apply(lambda x: x.hour)[i * 24:i * 24 + 24], Table["UnitSolar"][i * 24:i * 24 + 24] * 2860 * 2)
+#     plt.plot(Table["DateTime"].apply(lambda x: x.hour)[i * 24:i * 24 + 24], Table["battery_after"][i * 24:i * 24 + 24])
+#     plt.show()
+
+# print(i, sy.get_result())
+# print(Table["waste_solar"].sum())
+#
+# Table.to_csv("../others/result.csv")
 pass
