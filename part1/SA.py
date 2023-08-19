@@ -6,7 +6,7 @@ from model import System, DELTA
 # 0 : use battery
 # 1 : no use battery
 def zws_stra(input_list: list, return_json=False):
-    sy = System(2950, 158)
+    sy = System(2860, 158)
     segment = {1: (5, 7), 2: (8, 11), 3: (12, 16), 4: (21, 4 + 24)} # 17~20 insert
     time_list = [0] * 5
     for idx, val in enumerate(input_list):
