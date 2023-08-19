@@ -317,7 +317,20 @@ plot_zws()
 plt.legend()
 plt.ylim(0, 2400)
 plt.title("Cost per Day")
-plt.savefig("./figure/cost_per_day.png", dpi=300)
+# plt.savefig("./figure/cost_per_day.png", dpi=300)
+# plt.show()
+plt.clf()
+
+price = [0.450, 0.450, 0.450, 0.450, 0.450, 0.529, 0.529, 0.529, 0.628, 0.628, 0.628, 0.628, 0.529, 0.529, 0.529, 0.529, 0.529, 0.628, 0.628, 0.628, 0.628, 0.450, 0.450, 0.450]
+price = list(map(lambda x: x * 6, price))
+hour_cost = [0] * 24
+for idx, row in Table.iterrows():
+    hour_cost[row["DateTime"].hour - 1] += row["UnitSolar"]
+
+plt.scatter(list(range(24)), hour_cost, label="Grid Power Price")
+plt.scatter(list(range(24)), price, label="Average Solar Power")
+plt.legend()
+plt.savefig("./figure/grid_price.png", dpi=300)
 plt.show()
 
 # print((Table["energy_pg"] * Table["PriceUnit"]).sum())
