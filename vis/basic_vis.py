@@ -1,38 +1,26 @@
-import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
+# sb - 0.5: 17594.782098317664
+# sb - 1.0: 26979.595169503606
+# sb - 2.0: 76502.04848474894
 
-EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
-print(EnergyHistory_data)
-
-print(EnergyHistory_data["Consume"].mean())
-
-# plt.plot(EnergyHistory_data["DateTime"].values, EnergyHistory_data["Consume"].values)
-# plot datetime and value
-
-plt.plot(EnergyHistory_data["DateTime"].values, EnergyHistory_data["Consume"].values)
-plt.title("DateTime-Consume")
-plt.savefig("./DateTime-Consume")
-plt.clf()
+# zws - 0.5: 15281.566199328876
+# zws - 1.0: 26839.25250576276
+# zws - 2.0: 74060.376113
 
 
-def light_gen_electricity(rad, temp):
-    P_STC = 250
-    G_AC = rad
-    G_STC = 1000
-    T_E = temp
-    T_C = T_E + 30 * G_AC / 1000
-    T_R = 25
-    delta = -0.47 * 0.01
-    P_p_t = P_STC * G_AC * (1 + delta * (T_C - T_R)) / G_STC
-    return P_p_t
+
+# sb - 2: 25011
+# sb - 5: 23378
+# sb - 10: 23502
+
+# z - 2: 18712
+# z - 5: 14889
+# z - 10: 12200
 
 
-SunlightHistory_data = pd.read_csv("../data/SunlightHistory.csv")
-print(SunlightHistory_data)
-SunlightHistory_data["elec"] = light_gen_electricity(SunlightHistory_data["Radiation"], SunlightHistory_data["Temperature"])
-SunlightHistory_data.to_csv("./DateTime-Sunlight_processed.csv")
-plt.plot(SunlightHistory_data["DateTime"].values, SunlightHistory_data["elec"].values)
-plt.title("DateTime-Sunlight")
-plt.savefig("./DateTime-Sunlight")
-plt.clf()
+# sb before: 26979.3283
+# sb after: 27471.1546
+# 1.82%
+
+# z before: 26839.2525
+# z after: 27153.8215
+# 1.17%
