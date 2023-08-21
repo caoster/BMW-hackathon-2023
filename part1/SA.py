@@ -91,7 +91,7 @@ if __name__ == "__main__":
     lam = 0.9  # 降温速率
     eta = 0.95  # 终止条件
     M = 12  # Markov重复次数
-    T_0 = 10  # 初始温度
+    T_0 = 200  # 初始温度
     sa = SA(lam, eta, M, T_0, zws_stra)
     while True:
         sa.run()

@@ -13,15 +13,24 @@ DELTA = 1e-3
 plt.rcParams["date.autoformatter.day"] = "%m-%d"
 EnergyHistory_data = pd.read_csv("../data/EnergyHistory.csv")
 
-plt.plot(EnergyHistory_data.iloc[400:500]["DateTime"], EnergyHistory_data.iloc[400:500]["Consume"], linewidth=7, label="No Unforeseen Circumstances")
+plt.plot(EnergyHistory_data["DateTime"], EnergyHistory_data["Consume"], linewidth=7, label="No Unforeseen Circumstances")
 EnergyHistory_data.loc[(408, "Consume")] = 500
-EnergyHistory_data = EnergyHistory_data.iloc[400:500]
+EnergyHistory_data.loc[(483, "Consume")] = 300
+EnergyHistory_data.loc[(484, "Consume")] = 300
+EnergyHistory_data.loc[(485, "Consume")] = 300
+EnergyHistory_data.loc[(486, "Consume")] = 300
+
+EnergyHistory_data.loc[(201, "Consume")] = 0
+EnergyHistory_data.loc[(199, "Consume")] = 0
+EnergyHistory_data.loc[(200, "Consume")] = 0
+# EnergyHistory_data = EnergyHistory_data.iloc[400:500]
 
 data = plt.plot(EnergyHistory_data["DateTime"], EnergyHistory_data["Consume"], linewidth=3, label="With Unforeseen Circumstance")
 data[0].axes.get_xaxis().set_visible(False)
-plt.legend()
+plt.legend(loc="upper right")
 plt.savefig("./figure/unforeseen_circumstances.png", dpi=300)
 plt.show()
+
 # EnergyHistory_data.loc[(168, "Consume")] = 500
 # EnergyHistory_data.loc[(408, "Consume")] = 500
 SunlightHistory_data = pd.read_csv("../data/SunlightHistory.csv")
